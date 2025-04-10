@@ -5,10 +5,14 @@
 using namespace KamataEngine;
 
 #include "../External/KamataEngine/include/3d/PrimitiveDrawer.h"
+#include "../External/KamataEngine/include/math/MathUtility.h"
+
+
+using namespace KamataEngine::MathUtility;
 
 
 GameScene::GameScene() {
-	dxCommon = DirectXCommon::GetInstance(); // ここで初期化
+	dxCommon = DirectXCommon::GetInstance(); 
 	sprite_ = nullptr;
 }
 
@@ -21,15 +25,16 @@ GameScene::~GameScene() {
 	}
 
 	delete player_;
+	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 
-	for (WorldTransform * worldTransformBlock : worldTransformBlocks) {
-		delete worldTransformBlock;
+		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
+			delete worldTransformBlock;
+		}
 	}
-	worldTransformBlocks.clear();
+	worldTransformBlocks_.clear();
 }
-
 void GameScene::Init() {
-	dxCommon = DirectXCommon::GetInstance(); // 念のため再代入
+	dxCommon = DirectXCommon::GetInstance(); 
 	textureHandle_ = TextureManager::Load("mario.jpg");
 	BlocktextureHandle_ = TextureManager::Load("block.jpg");
 
@@ -39,6 +44,7 @@ void GameScene::Init() {
 	}
 
 	model_ = Model::Create();
+	Blockmodel_ = Model::Create();
 
 	worldTransform_ = new WorldTransform();
 	worldTransform_->Initialize();
@@ -46,46 +52,67 @@ void GameScene::Init() {
 	camera_ = new Camera();
 	camera_->Initialize();
 
-	 
 	player_ = new Player();
 	player_->Initialize(model_, textureHandle_, camera_);
 
-
+	const uint32_t knumBlockVirtical = 10;
 	const uint32_t knumBlocHorizontal = 20;
+
 	const float kBlockWidth = 2.0f;
+	const float kBlockHeight = 2.0f;
 
-	worldTransformBlocks.resize(knumBlocHorizontal);
+	worldTransformBlocks_.resize(knumBlockVirtical);
 
-	for (uint32_t i = 0; i < knumBlocHorizontal; i++) {
-		worldTransformBlocks[i] = new WorldTransform();
-		worldTransformBlocks[i]->Initialize();
-		worldTransformBlocks[i]->translation_.x = i * kBlockWidth;
-		worldTransformBlocks[i]->translation_.y = 1.0f;
-		worldTransformBlocks[i]->rotation_.x = 1.0f;
-		worldTransformBlocks[i]->rotation_.y = 1.0f;
-		worldTransformBlocks[i]->scale_.x = 1.0f;
-		worldTransformBlocks[i]->scale_.y = 1.0f;
+	for (uint32_t i = 0; i < knumBlockVirtical; i++) {
+		worldTransformBlocks_[i].resize(knumBlocHorizontal);
+	}
 
+	// 市松模様のようにブロックを配置
+	for (uint32_t i = 0; i < knumBlockVirtical; i++) {
+		for (uint32_t j = 0; j < knumBlocHorizontal; j++) {
+			if ((i + j) % 2 == 0) { 
+				worldTransformBlocks_[i][j] = new WorldTransform();
+				worldTransformBlocks_[i][j]->Initialize();
+				worldTransformBlocks_[i][j]->translation_.x = j * kBlockWidth;
+				worldTransformBlocks_[i][j]->translation_.y = i * kBlockHeight;
+				worldTransformBlocks_[i][j]->rotation_.x = 0.0f;
+				worldTransformBlocks_[i][j]->rotation_.y = 0.0f;
+				worldTransformBlocks_[i][j]->scale_.x = 1.0f;
+				worldTransformBlocks_[i][j]->scale_.y = 1.0f;
+			} else {
+				
+				worldTransformBlocks_[i][j] = nullptr;
+			}
+		}
 	}
 }
 
 void GameScene::Update() {
 	player_->Update();
-	for (WorldTransform* worldTransformBlock : worldTransformBlocks) {
 
-		worldTransformBlock->scale_;
-		worldTransformBlock->rotation_;
-		worldTransformBlock->translation_;
+	for (std::vector<WorldTransform*>& blockLine : worldTransformBlocks_) {
+		for (WorldTransform* worldTransformBlock : blockLine) {
+			if (!worldTransformBlock) {
+				continue;
+			} else {
+				Matrix4x4 scaleMatrix = MakeScaleMatrix(worldTransformBlock->scale_);
+				Matrix4x4 rotationXMatrix = MakeRotateXMatrix(worldTransformBlock->rotation_.x);
+				Matrix4x4 rotationYMatrix = MakeRotateYMatrix(worldTransformBlock->rotation_.y);
+				Matrix4x4 rotationZMatrix = MakeRotateZMatrix(worldTransformBlock->rotation_.z);
+				Matrix4x4 rotationMatrix = rotationXMatrix * rotationYMatrix * rotationZMatrix;
+				Matrix4x4 translationMatrix = MakeTranslateMatrix(worldTransformBlock->translation_);
 
-	/*	worldTransformBlock->matWorld_ = アフィン変換行列;*/
+				worldTransformBlock->matWorld_ = scaleMatrix * rotationMatrix * translationMatrix;
 
-		worldTransformBlock->TransferMatrix();
+				worldTransformBlock->TransferMatrix();
+			}
+		}
 	}
 }
 
 void GameScene::Draw() {
 	if (!dxCommon)
-		return; // nullptrチェック
+		return; 
 
 #pragma region 前景スプライト描画
 	Sprite::PreDraw(dxCommon->GetCommandList());
@@ -93,11 +120,15 @@ void GameScene::Draw() {
 	Sprite::PostDraw();
 
 	Model::PreDraw(dxCommon->GetCommandList());
-	
-	player_->Draw();
+	/*
+	player_->Draw();*/
 
-	for (WorldTransform* worldTransformBlock : worldTransformBlocks) {
-		Blockmodel_->Draw(*worldTransformBlock,camera);
+	for (std::vector<WorldTransform*>& blockLine : worldTransformBlocks_) {
+		for (WorldTransform* worldTransformBlock : blockLine) {
+			if (worldTransformBlock) {
+				Blockmodel_->Draw(*worldTransformBlock, *camera_, BlocktextureHandle_);
+			}
+		}
 	}
 
 	Model::PostDraw();

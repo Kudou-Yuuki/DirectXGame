@@ -19,7 +19,7 @@ public:
    KamataEngine::Model* Blockmodel_ = nullptr;  
    KamataEngine::WorldTransform* worldTransform_ = nullptr;  
    KamataEngine::Camera* camera_;  
-   std::vector<KamataEngine::WorldTransform*> worldTransformBlocks;
+    std::vector < std::vector<KamataEngine::WorldTransform*>>worldTransformBlocks_;
    GameScene();  
    ~GameScene();  
 
