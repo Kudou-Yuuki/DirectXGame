@@ -1,3 +1,4 @@
+#include "GameScene.h"
 #include <KamataEngine.h>
 
 using namespace KamataEngine;
@@ -12,6 +13,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	AxisIndicator* axisIndicator = nullptr;
 	PrimitiveDrawer* primitiveDrawer = nullptr;
 
+	GameScene* gameScene = new GameScene(); // インスタンス化
 	// ゲームウィンドウの作成
 	win = WinApp::GetInstance();
 	win->CreateGameWindow(L"LE2D_01_クドウ_ユウキ");
@@ -49,6 +51,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	primitiveDrawer = PrimitiveDrawer::GetInstance();
 	primitiveDrawer->Initialize();
+
+	gameScene->Init();
+
 #pragma endregion
 
 	// メインループ
@@ -60,6 +65,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		// ImGui受付開始
 		imguiManager->Begin();
+
+		gameScene->Update();
 		// 入力関連の毎フレーム処理
 		input->Update();
 		// 軸表示の更新
@@ -70,7 +77,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// 描画開始
 		dxCommon->PreDraw();
 		// 軸表示の描画
+		gameScene->Draw();
+
 		axisIndicator->Draw();
+
 		// プリミティブ描画のリセット
 		primitiveDrawer->Reset();
 		// ImGui描画
@@ -78,7 +88,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// 描画終了
 		dxCommon->PostDraw();
 	}
-
+	delete gameScene;
+	gameScene = nullptr;
 	// 3Dモデル解放
 	Model::StaticFinalize();
 	audio->Finalize();
