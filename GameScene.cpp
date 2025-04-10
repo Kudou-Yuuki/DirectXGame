@@ -16,7 +16,7 @@ GameScene::~GameScene() {
 		sprite_ = nullptr;
 		delete model_;
 	}
-	delete debugCamera_;
+
 	delete player_;
 }
 
@@ -29,8 +29,6 @@ void GameScene::Init() {
 		textureHandle_ = TextureManager::Load("default.png");
 	}
 
-	sprite_ = Sprite::Create(textureHandle_, {100, 50});
-
 	model_ = Model::Create();
 
 	worldTransform_ = new WorldTransform();
@@ -39,14 +37,7 @@ void GameScene::Init() {
 	camera_ = new Camera();
 	camera_->Initialize();
 
-	
-	PrimitiveDrawer::GetInstance()->SetViewProjection(camera_);
-	debugCamera_ = new DebugCamera(1280, 720);
-
-	AxisIndicator::GetInstance()->SetVisible(true);
-
-	AxisIndicator::GetInstance()->SetTargetCamera(&debugCamera_->GetCamera());
-
+	 
 	player_ = new Player();
 	player_->Initialize(model_, textureHandle_, camera_);
 }
@@ -54,17 +45,6 @@ void GameScene::Init() {
 void GameScene::Update() {
 	player_->Update();
 
-	debugCamera_->Update();
-#ifdef DEBUG
-
-	ImGui::Begin("GameScene");
-	ImGui::Text("Kamata Tarou %d.%d.%d", 2050, 12, 31);
-	ImGui::InputFloat3("InputFloat3", inputFloat);
-	ImGui::SliderFloat3("SliderFloat3", inputFloat, 0.0f, 1.0f);
-	ImGui::ShowDemoWindow();
-	ImGui::End();
-
-#endif
 }
 
 void GameScene::Draw() {
