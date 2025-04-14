@@ -94,8 +94,17 @@ void GameScene::Draw() {
 	Model::PreDraw(dxCommon->GetCommandList());
 
 	model_->Draw(*worldTransform_, debugCamera_->GetCamera(), textureHandle_);
-	PrimitiveDrawer::GetInstance()->DrawLine3d({0, 0, 0}, {0, 10, 0}, {1.0f, 0.0f, 0.0f, 1.0f});
+	for (int i = 0; i < 20; i++) {
+		for (int j = 0; j < 20; j++) {
 
+			PrimitiveDrawer::GetInstance()->DrawLine3d({float(-20), float(j * 2),0}, {float((i-10) * 2), float(j * 2),0}, {1.0f, 0.0f, 0.0f, 1.0f});
+
+			
+			PrimitiveDrawer::GetInstance()->DrawLine3d({float((j - 10) * 2), float(20), 0}, {float((j - 10) * 2), float(i * 2), 0}, {0.0f, 0.0f, 1.0f, 1.0f});
+		}
+	}
+
+	
 	Model::PostDraw();
 
 #pragma endregion
